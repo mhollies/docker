@@ -1,14 +1,29 @@
-# A basic apache server. To use either add or bind mount content under /var/www
-FROM ubuntu:12.04
+# Basic install of couchdb
+#
+# This will move the couchdb http server to port 8101 so adjust the port for your needs. 
+#
+# Currently installs couchdb 1.3.1
 
-MAINTAINER Kimbro Staken version: 0.1
+FROM ubuntu
+MAINTAINER Kimbro Staken
 
-RUN apt-get update && apt-get install -y apache2 && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN echo "deb http://us.archive.ubuntu.com/ubuntu/ precise universe" >> /etc/apt/sources.list
+RUN apt-get -y update
+RUN apt-get install -y g++
+RUN apt-get install -y erlang-dev erlang-manpages erlang-base-hipe erlang-eunit erlang-nox erlang-xmerl erlang-inets
 
-ENV APACHE_RUN_USER www-data
-ENV APACHE_RUN_GROUP www-data
-ENV APACHE_LOG_DIR /var/log/apache2
+RUN apt-get install -y libmozjs185-dev libicu-dev libcurl4-gnutls-dev libtool wget
 
-EXPOSE 80
+RUN cd /tmp ; wget http://www.bizdirusa.com/mirrors/apache/couchdb/source/1.3.1/apache-couchdb-1.3.1.tar.gz
 
-CMD ["/usr/sbin/apache2", "-D", "FOREGROUND"]
+RUN cd /tmp && tar xvzf apache-couchdb-1.3.1.tar.gz
+RUN apt-get install -y make
+RUN cd /tmp/apache-couchdb-* ; ./configure && make install
+
+RUN printf "[httpd]\nport = 8101\nbind_address = 0.0.0.0" > /usr/local/etc/couchdb/local.d/docker.ini
+
+EXPOSE 8101
+
+CMD ["/usr/local/bin/couchdb"]
+
+
