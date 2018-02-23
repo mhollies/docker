@@ -19,7 +19,8 @@ RUN cd /tmp ; wget http://apache.mirror.digionline.de/couchdb/source/2.1.1/apach
 RUN cd /tmp && tar xvzf apache-couchdb-2.1.1.tar.gz
 RUN apt-get install -y make
 RUN cd /tmp/apache-couchdb-* ; ./configure && make install
-
+RUN mkdir /usr/local/etc/couchdb 
+RUN mkdir /usr/local/etc/couchdb/local.d 
 RUN printf "[httpd]\nport = 8101\nbind_address = 0.0.0.0" > /usr/local/etc/couchdb/local.d/docker.ini
 
 EXPOSE 8101
