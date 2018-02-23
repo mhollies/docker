@@ -1,6 +1,5 @@
 ## Example of a PHP web application using Docker
 
-
 #### How does it work?
 
 ```bash
