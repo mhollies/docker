@@ -1,30 +1,43 @@
-# Basic install of couchdb
-#
-# This will move the couchdb http server to port 8101 so adjust the port for your needs. 
-#
-# Currently installs couchdb 1.3.1
+FROM frodenas/ubuntu
+MAINTAINER Ferran Rodenas <frodenas@gmail.com>
 
-FROM ubuntu
-MAINTAINER Kimbro Staken
+# Install and configure CouchDB 1.6.0
+RUN DEBIAN_FRONTEND=noninteractive && \
+    apt-get install -y --force-yes \
+    erlang-dev \
+    erlang-manpages \
+    erlang-base-hipe \
+    erlang-eunit \
+    erlang-nox \
+    erlang-xmerl \
+    erlang-inets \
+    libmozjs185-dev \
+    libicu-dev \
+    libcurl4-gnutls-dev \
+    libtool && \
+    cd /tmp && \
+    wget http://mirror.sdunix.com/apache/couchdb/source/1.6.0/apache-couchdb-1.6.0.tar.gz && \
+    tar xzvf apache-couchdb-1.6.0.tar.gz && \
+    cd apache-couchdb-1.6.0 && \
+    ./configure && \
+    make && \
+    make install && \
+    sed -e 's/^bind_address = .*$/bind_address = 0.0.0.0/' -i /usr/local/etc/couchdb/default.ini && \
+    sed -e 's/^database_dir = .*$/database_dir = \/data/' -i /usr/local/etc/couchdb/default.ini && \
+    sed -e 's/^view_index_dir = .*$/view_index_dir = \/data/' -i /usr/local/etc/couchdb/default.ini && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN echo "deb http://us.archive.ubuntu.com/ubuntu/ precise universe" >> /etc/apt/sources.list
-RUN apt-get -y update
-RUN apt-get install -y g++
-RUN apt-get install -y erlang-dev erlang-manpages erlang-base-hipe erlang-eunit erlang-nox erlang-xmerl erlang-inets
+# Add scripts
+ADD scripts /scripts
+RUN chmod +x /scripts/*.sh
+RUN touch /.firstrun
 
-RUN apt-get install -y libmozjs185-dev libicu-dev libcurl4-gnutls-dev libtool wget
+# Command to run
+ENTRYPOINT ["/scripts/run.sh"]
+CMD [""]
 
-RUN cd /tmp ; wget http://apache.mirror.digionline.de/couchdb/source/2.1.1/apache-couchdb-2.1.1.tar.gz
+# Expose listen port
+EXPOSE 5984
 
-RUN cd /tmp && tar xvzf apache-couchdb-2.1.1.tar.gz
-RUN apt-get install -y make
-RUN cd /tmp/apache-couchdb-* ; ./configure && make install
-RUN mkdir /usr/local/etc/couchdb 
-RUN mkdir /usr/local/etc/couchdb/local.d 
-RUN printf "[httpd]\nport = 8101\nbind_address = 0.0.0.0" > /usr/local/etc/couchdb/local.d/docker.ini
-
-EXPOSE 8101
-
-CMD ["/usr/local/bin/couchdb"]
-
-
+# Expose our data, logs and configuration volumes
+VOLUME ["/data", "/usr/local/var/log/couchdb", "/usr/local/etc/couchdb"]
