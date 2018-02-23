@@ -1,97 +1,49 @@
-# CouchDB Dockerfile
+## MongoDB Dockerfile
 
-A Dockerfile that produces a Docker Image for [Apache CouchDB](http://couchdb.apache.org/).
 
-## CouchDB version
+This repository contains **Dockerfile** of [MongoDB](http://www.mongodb.org/) for [Docker](https://www.docker.com/)'s [automated build](https://registry.hub.docker.com/u/dockerfile/mongodb/) published to the public [Docker Hub Registry](https://registry.hub.docker.com/).
 
-The `master` branch currently hosts CouchDB 1.6.
 
-Different versions of CouchDB are located at the github repo [branches](https://github.com/frodenas/docker-couchdb/branches).
+### Base Docker Image
 
-## Usage
+* [dockerfile/ubuntu](http://dockerfile.github.io/#/ubuntu)
 
-### Build the image
 
-To create the image `frodenas/couchdb`, execute the following command on the `docker-couchdb` folder:
+### Installation
 
-```
-$ docker build -t frodenas/couchdb .
-```
+1. Install [Docker](https://www.docker.com/).
 
-### Run the image
+2. Download [automated build](https://registry.hub.docker.com/u/dockerfile/mongodb/) from public [Docker Hub Registry](https://registry.hub.docker.com/): `docker pull dockerfile/mongodb`
 
-To run the image and bind to host port 5984:
+   (alternatively, you can build an image from Dockerfile: `docker build -t="dockerfile/mongodb" github.com/dockerfile/mongodb`)
 
-```
-$ docker run -d --name couchdb -p 5984:5984 frodenas/couchdb
-```
 
-The first time you run your container, a new user `couchdb` with all privileges will be created with a random password.
-To get the password, check the logs of the container by running:
+### Usage
 
-```
-docker logs <CONTAINER_ID>
-```
+#### Run `mongod`
 
-You will see an output like the following:
+    docker run -d -p 27017:27017 --name mongodb dockerfile/mongodb
 
-```
-========================================================================
-CouchDB User: "couchdb"
-CouchDB Password: "jPp5fBJySeuJPTN8
-========================================================================
-```
+#### Run `mongod` w/ persistent/shared directory
 
-#### Credentials
+    docker run -d -p 27017:27017 -v <db-dir>:/data/db --name mongodb dockerfile/mongodb
 
-If you want to preset credentials instead of a random generated ones, you can set the following environment variables:
+#### Run `mongod` w/ HTTP support
 
-* `COUCHDB_USERNAME` to set a specific username
-* `COUCHDB_PASSWORD` to set a specific password
+    docker run -d -p 27017:27017 -p 28017:28017 --name mongodb dockerfile/mongodb mongod --rest --httpinterface
 
-On this example we will preset our custom username and password:
+#### Run `mongod` w/ Smaller default file size
 
-```
-$ docker run -d \
-    --name couchdb \
-    -p 5984:5984 \
-    -e COUCHDB_USERNAME=myusername \
-    -e COUCHDB_PASSWORD=mypassword \
-    frodenas/couchdb
-```
+    docker run -d -p 27017:27017 --name mongodb dockerfile/mongodb mongod --smallfiles
 
-#### Databases
+#### Run `mongo`
 
-If you want to create a database at container's boot time, you can set the following environment variables:
+    docker run -it --rm --link mongodb:mongodb dockerfile/mongodb bash -c 'mongo --host mongodb'
 
-* `COUCHDB_DBNAME` to create a database
+##### Usage with VirtualBox (boot2docker-vm)
 
-On this example we will preset our custom username and password and we will create a database:
+_You will need to set up nat port forwarding with:_  
 
-```
-$ docker run -d \
-    --name couchdb \
-    -p 5984:5984 \
-    -e COUCHDB_USERNAME=myusername \
-    -e COUCHDB_PASSWORD=mypassword \
-    -e COUCHDB_DBNAME=mydb \
-    frodenas/couchdb
-```
+    VBoxManage modifyvm "boot2docker-vm" --natpf1 "guestmongodb,tcp,127.0.0.1,27017,,27017"
 
-#### Persistent data
-
-The CouchDB server is configured to store data in the `/data` directory inside the container. You can map the
-container's `/data` volume to a volume on the host so the data becomes independent of the running container:
-
-```
-$ mkdir -p /tmp/couchdb
-$ docker run -d \
-    --name couchdb \
-    -p 5984:5984 \
-    -v /tmp/couchdb:/data \
-    frodenas/couchdb
-```
-
-## Copyright
-
-Copyright (c) 2014 Ferran Rodenas. See [LICENSE](https://github.com/frodenas/docker-couchdb/blob/master/LICENSE) for details.
+This will allow you to connect to your mongo container with the standard `mongo` commands.

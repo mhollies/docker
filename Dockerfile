@@ -1,14 +1,31 @@
-# Install a more up to date mongodb than what is included in the default ubuntu repositories.
+#
+# MongoDB Dockerfile
+#
+# https://github.com/dockerfile/mongodb
+#
 
-FROM ubuntu
-MAINTAINER Kimbro Staken
+# Pull base image.
+FROM dockerfile/ubuntu
 
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv 7F0CEB10
-RUN echo "deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen" | tee -a /etc/apt/sources.list.d/10gen.list
-RUN apt-get update
-RUN apt-get -y install apt-utils
-RUN apt-get -y install mongodb-10gen
+# Install MongoDB.
+RUN \
+  apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10 && \
+  echo 'deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen' > /etc/apt/sources.list.d/mongodb.list && \
+  apt-get update && \
+  apt-get install -y mongodb-org && \
+  rm -rf /var/lib/apt/lists/*
 
-#RUN echo "" >> /etc/mongodb.conf
+# Define mountable directories.
+VOLUME ["/data/db"]
 
-CMD ["/usr/bin/mongod", "--config", "/etc/mongodb.conf"] 
+# Define working directory.
+WORKDIR /data
+
+# Define default command.
+CMD ["mongod"]
+
+# Expose ports.
+#   - 27017: process
+#   - 28017: http
+EXPOSE 27017
+EXPOSE 28017
