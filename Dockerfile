@@ -1,43 +1,14 @@
-FROM frodenas/ubuntu
-MAINTAINER Ferran Rodenas <frodenas@gmail.com>
+# Install a more up to date mongodb than what is included in the default ubuntu repositories.
 
-# Install and configure CouchDB 1.6.0
-RUN DEBIAN_FRONTEND=noninteractive && \
-    apt-get install -y --force-yes \
-    erlang-dev \
-    erlang-manpages \
-    erlang-base-hipe \
-    erlang-eunit \
-    erlang-nox \
-    erlang-xmerl \
-    erlang-inets \
-    libmozjs185-dev \
-    libicu-dev \
-    libcurl4-gnutls-dev \
-    libtool && \
-    cd /tmp && \
-    wget http://mirror.sdunix.com/apache/couchdb/source/1.6.0/apache-couchdb-1.6.0.tar.gz && \
-    tar xzvf apache-couchdb-1.6.0.tar.gz && \
-    cd apache-couchdb-1.6.0 && \
-    ./configure && \
-    make && \
-    make install && \
-    sed -e 's/^bind_address = .*$/bind_address = 0.0.0.0/' -i /usr/local/etc/couchdb/default.ini && \
-    sed -e 's/^database_dir = .*$/database_dir = \/data/' -i /usr/local/etc/couchdb/default.ini && \
-    sed -e 's/^view_index_dir = .*$/view_index_dir = \/data/' -i /usr/local/etc/couchdb/default.ini && \
-    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+FROM ubuntu
+MAINTAINER Kimbro Staken
 
-# Add scripts
-ADD scripts /scripts
-RUN chmod +x /scripts/*.sh
-RUN touch /.firstrun
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv 7F0CEB10
+RUN echo "deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen" | tee -a /etc/apt/sources.list.d/10gen.list
+RUN apt-get update
+RUN apt-get -y install apt-utils
+RUN apt-get -y install mongodb-10gen
 
-# Command to run
-ENTRYPOINT ["/scripts/run.sh"]
-CMD [""]
+#RUN echo "" >> /etc/mongodb.conf
 
-# Expose listen port
-EXPOSE 5984
-
-# Expose our data, logs and configuration volumes
-VOLUME ["/data", "/usr/local/var/log/couchdb", "/usr/local/etc/couchdb"]
+CMD ["/usr/bin/mongod", "--config", "/etc/mongodb.conf"] 
